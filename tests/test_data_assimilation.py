@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -88,6 +89,20 @@ def test_esmda_linear():
     x, p = pseudopdf(ld_post3[:, 0])
     assert_allclose(43420257, np.max(p), atol=1)
     assert_allclose(0.0, x[np.argmax(p)], atol=1e-8)
+
+    # Warning
+    with pytest.warns(UserWarning, match='provided: 1.25'):
+        lm_post3 = dageo.esmda(
+            model_prior=mprior,
+            forward=lin_fwd,
+            data_obs=l_dobs,
+            sigma=obs_std,
+            alphas=[4, 4, 4, 4, 4],
+            localization_matrix=np.array([[0.5]]),
+            callback_post=cbp,
+            return_post_data=False,
+            random=3333,
+        )
 
 
 def test_all_dir():

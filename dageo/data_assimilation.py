@@ -13,6 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 # License for the specific language governing permissions and limitations under
 # the License.
+import warnings
 
 import numpy as np
 
@@ -91,6 +92,10 @@ def esmda(model_prior, forward, data_obs, sigma, alphas=4, data_prior=None,
         alphas = np.zeros(alphas) + alphas
     else:
         alphas = np.asarray(alphas)
+    if abs(np.sum(1/alphas)-1) > 0.01:
+        warnings.warn(
+            f"The sum of 1/alphas should be 1; provided: {np.sum(1/alphas)}."
+        )
 
     # Copy prior as start of post (output)
     model_post = model_prior.copy()
