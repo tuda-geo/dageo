@@ -1,3 +1,4 @@
+#%%
 r"""
 Geertsma Parameter Estimation with ESMDA
 ========================================
@@ -449,6 +450,7 @@ fig.colorbar(im1, ax=axs, label="Subsidence (mm)")
 for ax in axs:
     ax.add_patch(plt.Circle((0, 0), true_radius, fill=False, color='k', linestyle='--'))
     ax.set_aspect('equal')
+
 
 ###############################################################################
 # Calculate RMSE for Subsidence Predictions
