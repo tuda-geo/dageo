@@ -18,13 +18,16 @@ from dageo import utils
 from dageo.utils import localization_matrix, Report
 from dageo.data_assimilation import esmda
 from dageo.reservoir_simulator import Simulator, RandomPermeability
+from dageo.geertsma import Geertsma, GeertsmaFullGrid
+from dageo.particle_filter import particle_filter
 
 # Initialize a random number generator.
 rng = utils.rng()
 
 
-__all__ = ['reservoir_simulator', 'data_assimilation', 'utils',
-           'esmda', 'Simulator', 'RandomPermeability',
+__all__ = ['reservoir_simulator', 'data_assimilation', 'utils', 'geertsma',
+           'particle_filter', 'esmda', 'particle_filter', 'Simulator', 
+           'RandomPermeability', 'Geertsma', 'GeertsmaFullGrid',
            'localization_matrix', 'rng', 'Report']
 
 __version__ = utils.__version__
