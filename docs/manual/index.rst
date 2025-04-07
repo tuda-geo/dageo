@@ -15,6 +15,7 @@ User Guide
 
    about
    installation
+   citation
    references
    license
 
