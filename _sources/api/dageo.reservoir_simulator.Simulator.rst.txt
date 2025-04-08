@@ -1,0 +1,19 @@
+Simulator
+=========
+
+.. currentmodule:: dageo.reservoir_simulator
+
+.. autoclass:: Simulator
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~Simulator.__call__
+      ~Simulator.solve
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: __call__
+   .. automethod:: solve

@@ -1,0 +1,6 @@
+localization_matrix
+===================
+
+.. currentmodule:: dageo.utils
+
+.. autofunction:: localization_matrix

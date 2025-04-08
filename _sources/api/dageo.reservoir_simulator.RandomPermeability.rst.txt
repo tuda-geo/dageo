@@ -1,0 +1,29 @@
+RandomPermeability
+==================
+
+.. currentmodule:: dageo.reservoir_simulator
+
+.. autoclass:: RandomPermeability
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~RandomPermeability.cov
+      ~RandomPermeability.lcho
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~RandomPermeability.__call__
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: cov
+   .. autoattribute:: lcho
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: __call__

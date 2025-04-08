@@ -1,0 +1,6 @@
+gaussian_covariance
+===================
+
+.. currentmodule:: dageo.utils
+
+.. autofunction:: gaussian_covariance

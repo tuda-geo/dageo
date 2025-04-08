@@ -1,0 +1,7 @@
+Report
+======
+
+.. currentmodule:: dageo.utils
+
+.. autoclass:: Report
+   :show-inheritance:

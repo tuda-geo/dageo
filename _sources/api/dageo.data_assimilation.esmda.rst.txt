@@ -1,0 +1,6 @@
+esmda
+=====
+
+.. currentmodule:: dageo.data_assimilation
+
+.. autofunction:: esmda

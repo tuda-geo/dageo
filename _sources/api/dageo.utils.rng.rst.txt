@@ -1,0 +1,6 @@
+rng
+===
+
+.. currentmodule:: dageo.utils
+
+.. autofunction:: rng
