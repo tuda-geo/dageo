@@ -22,3 +22,6 @@ dageo/version.py
 build/
 dist/
 dageo.egg-info/
+
+#any folder starting with .
+.claude/
