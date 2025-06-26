@@ -75,9 +75,10 @@ reproduce the facies.
 
 
 """
-import pooch
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pooch
 
 import dageo
 
@@ -86,8 +87,8 @@ if compute_darts:
     from darts.engines import redirect_darts_output
     from darts.models.darts_model import DartsModel
     from darts.physics.geothermal.physics import Geothermal
-    from darts.reservoirs.struct_reservoir import StructReservoir
     from darts.physics.geothermal.property_container import PropertyContainer
+    from darts.reservoirs.struct_reservoir import StructReservoir
 
     redirect_darts_output("run_geothermal.log")
 
@@ -108,7 +109,7 @@ fdarts = "darts_output_geothermal.npz"
 # Load Facies: Not needed if you compute the facies yourself,
 #              as described at the end of the notebook.
 fpfacies = pooch.retrieve(
-    "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/"+ffacies,
+    "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/" + ffacies,
     "9b18f1c80aea93d7973effafde001aa7e72a21ac91edf08e3899d5486998ad2e",
     fname=ffacies,
     path=folder,
@@ -118,7 +119,7 @@ facies = np.load(fpfacies)
 # Load pre-computed DARTS result; only needed if `compute_darts=False`.
 if not compute_darts:
     fpdarts = pooch.retrieve(
-        "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/"+fdarts,
+        "https://raw.github.com/tuda-geo/data/2024-11-30/resmda/" + fdarts,
         "5622729cd5dc7214de8a199512ace39bda48bff113b2eddb0c48593a57c020d1",
         fname=fdarts,
         path=folder,
@@ -134,26 +135,26 @@ if not compute_darts:
 # agree with the facies you computed!
 
 # Model parameters
-nx, ny, nz = 60, 60, 3   # 60 x 60 x 3 cells
+nx, ny, nz = 60, 60, 3  # 60 x 60 x 3 cells
 dx, dy, dz = 30, 30, 30  # Each cell is a voxel of 30 x 30 x 30 meter
-ne = 100                 # 100 ensembles
-years = np.arange(31)    # Time: we are modelling 30 years:
+ne = 100  # 100 ensembles
+years = np.arange(31)  # Time: we are modelling 30 years:
 
 # Well locations
 iw = [30, 30]
 jw = [14, 46]
 
 # Minimum and maximum values for permeability
-perm_min = 100.
-perm_max = 200.
+perm_min = 100.0
+perm_max = 200.0
 
 # Get permeability fields by populating the facies
 perm = np.zeros(facies.shape)
 perm[facies == 0] = perm_min  # outside channels minimum
-perm[facies > 0] = perm_max   # inside channels maximum
+perm[facies > 0] = perm_max  # inside channels maximum
 
 # We use a model with 3 layers, starting all with the same permeability.
-perm = np.stack([perm]*nz, axis=-1)  # 3x the same
+perm = np.stack([perm] * nz, axis=-1)  # 3x the same
 
 # Assign true permeability (first) and prior permeability
 perm_true = perm[:1, :, :, :]
@@ -186,9 +187,7 @@ ax.plot(jw[1], iw[1], "^", c="r", ms=10, mec="w")
 # Labels and colour bar
 ax.set_ylabel("Y Grid Cell")
 ax.set_xlabel("X Grid Cell")
-fig.suptitle(
-    "«True» Permeabilities (blue: injection, red: production well)"
-)
+fig.suptitle("«True» Permeabilities (blue: injection, red: production well)")
 cbar = fig.colorbar(im, ax=ax, label="Permeability (mD)")
 
 
@@ -201,7 +200,7 @@ cbar = fig.colorbar(im, ax=ax, label="Permeability (mD)")
 fig, axs = plt.subplots(3, 4, **fopts)
 
 for i, ax in enumerate(axs.ravel()):
-    ax.set_title(f"Realization {i+1}")
+    ax.set_title(f"Realization {i + 1}")
 
     # Permeabilities
     im = ax.imshow(perm_prior[i, :, :, 0], **popts)
@@ -234,8 +233,9 @@ if compute_darts:
     class Model(DartsModel):
         """Custom DartsModel Class."""
 
-        def __init__(self, perm, n_points=128, dx=dx, dy=dy, dz=dz,
-                     iw=iw, jw=jw):
+        def __init__(
+            self, perm, n_points=128, dx=dx, dy=dy, dz=dz, iw=iw, jw=jw
+        ):
             """Initialize a new DartsModel instance."""
             super().__init__()
 
@@ -263,7 +263,7 @@ if compute_darts:
                 dz=dz,
                 permx=perm,
                 permy=perm,
-                permz=0.1*perm,
+                permz=0.1 * perm,
                 poro=poro,
                 depth=2000,
                 hcap=2200,
@@ -422,9 +422,14 @@ k2c = -273.15  # To plot °C instead of K
 # cluster the models that have no connecting channel.
 
 fig, ax = plt.subplots()
-ax.scatter(years, data_obs+k2c, label="Observed", c="r", zorder=10)
-ax.plot(years, data_prior.T+k2c, c="grey", alpha=0.4,
-        label=["Prior"] + [None] * (ne - 1))
+ax.scatter(years, data_obs + k2c, label="Observed", c="r", zorder=10)
+ax.plot(
+    years,
+    data_prior.T + k2c,
+    c="grey",
+    alpha=0.4,
+    label=["Prior"] + [None] * (ne - 1),
+)
 ax.legend()
 ax.set_xlabel("Time (years)")
 ax.set_ylabel("Temperature (°C)")
@@ -434,6 +439,7 @@ ax.set_title("Temperature at Production Well")
 ###############################################################################
 # Perform Data Assimilation (ESMDA)
 # ---------------------------------
+
 
 # Define a function to restrict the permeability values
 def restrict_permeability(x):
@@ -480,11 +486,17 @@ else:
 # increase the permeability between the wells.
 
 fig, ax = plt.subplots()
-ax.scatter(years, data_obs+k2c, label="Observed", c="r", zorder=10)
-ax.plot(years, data_prior.T+k2c, c="grey", alpha=0.4,
-        label=["Prior"] + [None] * (ne - 1))
-ax.plot(years, data_post.T+k2c, c="b",
-        label=["Posterior"] + [None] * (ne - 1))
+ax.scatter(years, data_obs + k2c, label="Observed", c="r", zorder=10)
+ax.plot(
+    years,
+    data_prior.T + k2c,
+    c="grey",
+    alpha=0.4,
+    label=["Prior"] + [None] * (ne - 1),
+)
+ax.plot(
+    years, data_post.T + k2c, c="b", label=["Posterior"] + [None] * (ne - 1)
+)
 ax.legend()
 ax.set_xlabel("Time (years)")
 ax.set_ylabel("Temperature (°C)")

@@ -15,19 +15,34 @@
 # the License.
 
 from dageo import utils
-from dageo.utils import localization_matrix, Report
-from dageo.data_assimilation import esmda
-from dageo.reservoir_simulator import Simulator, RandomPermeability
+from dageo.data_assimilation import esmda, esmda_subspace
 from dageo.geertsma import Geertsma, GeertsmaFullGrid
 from dageo.particle_filter import particle_filter
+from dageo.reservoir_simulator import RandomPermeability, Simulator
+from dageo.utils import Report, localization_matrix
 
 # Initialize a random number generator.
 rng = utils.rng()
 
 
-__all__ = ['reservoir_simulator', 'data_assimilation', 'utils', 'geertsma',
-           'particle_filter', 'esmda', 'particle_filter', 'Simulator', 
-           'RandomPermeability', 'Geertsma', 'GeertsmaFullGrid',
-           'localization_matrix', 'rng', 'Report']
+__all__ = [
+    "reservoir_simulator",
+    "data_assimilation",
+    "utils",
+    "geertsma",
+    "particle_filter",
+    "esmda",
+    "esmda_subspace",
+    "particle_filter",
+    "Simulator",
+    "RandomPermeability",
+    "Geertsma",
+    "GeertsmaFullGrid",
+    "TorchGeertsma",
+    "TorchGeertsmaFullGrid",
+    "localization_matrix",
+    "rng",
+    "Report",
+]
 
 __version__ = utils.__version__

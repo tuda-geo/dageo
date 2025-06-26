@@ -5,8 +5,9 @@ r"""
 Ensemble Smoother Multiple Data Assimilation (ESMDA) in Reservoir Simulation.
 
 """
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 import dageo
 
@@ -23,7 +24,7 @@ rng = np.random.default_rng(1848)
 # Grid extension
 nx = 30
 ny = 25
-nc = nx*ny
+nc = nx * ny
 
 # Permeabilities
 perm_mean = 3.0
@@ -31,8 +32,10 @@ perm_min = 0.5
 perm_max = 5.0
 
 # ESMDA parameters
-ne = 100                  # Number of ensembles
-dt = np.zeros(10)+0.0001  # Time steps (could be irregular, e.g., increasing!)
+ne = 100  # Number of ensembles
+dt = (
+    np.zeros(10) + 0.0001
+)  # Time steps (could be irregular, e.g., increasing!)
 time = np.r_[0, np.cumsum(dt)]
 nt = time.size
 
@@ -71,8 +74,12 @@ axs[1, 0].set_title("Random Model 1")
 axs[1, 0].imshow(perm_prior[0, ...].T, **pinp1)
 axs[1, 1].set_title("Random Model 2")
 axs[1, 1].imshow(perm_prior[1, ...].T, **pinp1)
-fig.colorbar(im, ax=axs[1, :], orientation="horizontal",
-             label="Log of Permeability (mD)")
+fig.colorbar(
+    im,
+    ax=axs[1, :],
+    orientation="horizontal",
+    label="Log of Permeability (mD)",
+)
 for ax in axs[1, :].ravel():
     ax.set_xlabel("x-direction")
 for ax in axs[:, 0].ravel():
@@ -100,9 +107,9 @@ data_obs = rng.normal(data_true, dstd)
 # QC data and priors
 fig, ax = plt.subplots(1, 1, constrained_layout=True)
 ax.set_title("Observed and prior data")
-ax.plot(time*24*60*60, data_prior.T, color=".6", alpha=0.5)
-ax.plot(time*24*60*60, data_true, "ko", label="True data")
-ax.plot(time*24*60*60, data_obs, "C3o", label="Obs. data")
+ax.plot(time * 24 * 60 * 60, data_prior.T, color=".6", alpha=0.5)
+ax.plot(time * 24 * 60 * 60, data_true, "ko", label="True data")
+ax.plot(time * 24 * 60 * 60, data_obs, "C3o", label="Obs. data")
 ax.legend()
 ax.set_xlabel("Time (s)")
 ax.set_ylabel("Pressure (bar)")
@@ -145,8 +152,9 @@ ax[0].set_title("Prior Mean")
 im = ax[0].imshow(perm_prior.mean(axis=0).T, **pinp2)
 ax[1].set_title("Post Mean")
 ax[1].imshow(perm_post.mean(axis=0).T, **pinp2)
-fig.colorbar(im, ax=ax, label="Log of Permeability (mD)",
-             orientation="horizontal")
+fig.colorbar(
+    im, ax=ax, label="Log of Permeability (mD)", orientation="horizontal"
+)
 
 
 ###############################################################################
@@ -160,10 +168,10 @@ fig.colorbar(im, ax=ax, label="Log of Permeability (mD)",
 # Compare posterior to prior and observed data
 fig, ax = plt.subplots(1, 1, constrained_layout=True)
 ax.set_title("Prior and posterior data")
-ax.plot(time*24*60*60, data_prior.T, color=".6", alpha=0.5)
-ax.plot(time*24*60*60, data_post.T, color="C0", alpha=0.5)
-ax.plot(time*24*60*60, data_true, "ko")
-ax.plot(time*24*60*60, data_obs, "C3o")
+ax.plot(time * 24 * 60 * 60, data_prior.T, color=".6", alpha=0.5)
+ax.plot(time * 24 * 60 * 60, data_post.T, color="C0", alpha=0.5)
+ax.plot(time * 24 * 60 * 60, data_true, "ko")
+ax.plot(time * 24 * 60 * 60, data_obs, "C3o")
 ax.set_xlabel("Time (s)")
 ax.set_ylabel("Pressure (bar)")
 

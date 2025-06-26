@@ -30,8 +30,8 @@ The model used for this example is
 which is a linear model if :math:`\beta=0`.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 import dageo
 
@@ -48,20 +48,21 @@ def forward(x, beta):
 
 
 fig, axs = plt.subplots(
-        1, 2, figsize=(8, 3), sharex=True, constrained_layout=True)
+    1, 2, figsize=(8, 3), sharex=True, constrained_layout=True
+)
 fig.suptitle("Forward Model:  y = x (1 + β x²)")
 px = np.linspace(-5, 5, 301)
 for i, b in enumerate([0.0, 0.2]):
-    axs[i].set_title(
-            f"{['Linear model', 'Nonlinear model'][i]}: β = {b}")
+    axs[i].set_title(f"{['Linear model', 'Nonlinear model'][i]}: β = {b}")
     axs[i].plot(px, forward(px, b))
-    axs[i].set_xlabel('x')
-    axs[i].set_ylabel('y')
+    axs[i].set_xlabel("x")
+    axs[i].set_ylabel("y")
 
 
 ###############################################################################
 # Plotting functions
 # ------------------
+
 
 def pseudopdf(data, bins=200, density=True, **kwargs):
     """Return the pdf from a simple bin count.
@@ -71,42 +72,45 @@ def pseudopdf(data, bins=200, density=True, **kwargs):
     `scipy.stats.gaussian_kde`.
     """
     x, y = np.histogram(data, bins=bins, density=density, **kwargs)
-    return (y[:-1]+y[1:])/2, x
+    return (y[:-1] + y[1:]) / 2, x
 
 
 def plot_result(mpost, dpost, dobs, title, ylim):
     """Wrapper to use the same plotting for the linear and non-linear case."""
 
     fig, (ax1, ax2) = plt.subplots(
-            1, 2, figsize=(10, 4), sharey=True, constrained_layout=True)
+        1, 2, figsize=(10, 4), sharey=True, constrained_layout=True
+    )
     fig.suptitle(title)
 
     # Plot Likelihood
     ax2.plot(
         *pseudopdf(dageo.rng.normal(dobs, size=(ne, dobs.size))),
-        'C2', lw=2, label='Datum'
+        "C2",
+        lw=2,
+        label="Datum",
     )
 
     # Plot steps
-    na = mpost.shape[0]-1
-    for i in range(na+1):
+    na = mpost.shape[0] - 1
+    for i in range(na + 1):
         params = {
-            'color': 'C0' if i == na else 'C3',    # Last blue, rest red
-            'lw': 2 if i in [0, na] else 1,        # First/last thick
-            'alpha': 1 if i in [0, na] else i/na,  # start faint
-            'label': ['Initial', *((na-2)*('',)), 'MDA steps', 'MDA'][i],
+            "color": "C0" if i == na else "C3",  # Last blue, rest red
+            "lw": 2 if i in [0, na] else 1,  # First/last thick
+            "alpha": 1 if i in [0, na] else i / na,  # start faint
+            "label": ["Initial", *((na - 2) * ("",)), "MDA steps", "MDA"][i],
         }
         ax1.plot(*pseudopdf(mpost[i, :, 0], range=(-3, 5)), **params)
         ax2.plot(*pseudopdf(dpost[i, :, 0], range=(-5, 8)), **params)
 
     # Axis and labels
-    ax1.set_title('Model Parameter Domain')
-    ax1.set_xlabel('x')
+    ax1.set_title("Model Parameter Domain")
+    ax1.set_xlabel("x")
     ax1.set_ylim(ylim)
     ax1.set_xlim([-3, 5])
     ax1.legend()
-    ax2.set_title('Data Domain')
-    ax2.set_xlabel('y')
+    ax2.set_title("Data Domain")
+    ax2.set_xlabel("y")
     ax2.set_xlim([-5, 8])
     ax2.legend()
 
@@ -139,6 +143,7 @@ mprior = dageo.rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
 # Run ESMDA and plot
 # ''''''''''''''''''
 
+
 def lin_fwd(x):
     """Linear forward model."""
     return forward(x, beta=0.0)
@@ -159,7 +164,7 @@ lm_post, ld_post = dageo.esmda(
 
 ###############################################################################
 
-plot_result(lm_post, ld_post, l_dobs, title='Linear Case', ylim=[0, 0.6])
+plot_result(lm_post, ld_post, l_dobs, title="Linear Case", ylim=[0, 0.6])
 
 
 ###############################################################################
@@ -172,6 +177,7 @@ plot_result(lm_post, ld_post, l_dobs, title='Linear Case', ylim=[0, 0.6])
 ###############################################################################
 # Nonlinear case
 # --------------
+
 
 def nonlin_fwd(x):
     """Nonlinear forward model."""
@@ -191,7 +197,7 @@ nm_post, nd_post = dageo.esmda(
 
 ###############################################################################
 
-plot_result(nm_post, nd_post, n_dobs, title='Nonlinear Case', ylim=[0, 0.7])
+plot_result(nm_post, nd_post, n_dobs, title="Nonlinear Case", ylim=[0, 0.7])
 
 
 ###############################################################################

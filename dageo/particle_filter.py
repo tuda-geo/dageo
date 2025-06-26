@@ -15,19 +15,30 @@
 # the License.
 
 import numpy as np
+
 from dageo import utils
 
-__all__ = ['particle_filter']
+__all__ = ["particle_filter"]
 
 
 def __dir__():
     return __all__
 
 
-def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
-                    resampling_threshold=0.5, callback_post=None,
-                    return_post_data=True, return_weights=False,
-                    return_steps=False, random=None):
+def particle_filter(
+    model_prior,
+    forward,
+    data_obs,
+    sigma,
+    n_steps=1,
+    resampling_threshold=0.5,
+    callback_post=None,
+    return_post_data=True,
+    return_weights=False,
+    return_steps=False,
+    random=None,
+    verbose=True,
+):
     """Particle Filter algorithm for sequential data assimilation.
 
     The Particle Filter is a sequential Monte Carlo method for Bayesian state
@@ -41,13 +52,13 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
     Parameters
     ----------
     model_prior : ndarray
-        Prior models of dimension ``(n_particles, ...)``, where ``n_particles`` is the number of
-        particles.
+        Prior models of dimension ``(n_particles, ...)``, where
+        ``n_particles`` is the number of particles.
     forward : callable
         Forward model that takes an ndarray of the shape of the prior models
-        ``(n_particles, ...)``, and returns a ndarray of the shape of the prior data
-        ``(n_particles, nd)``; ``n_particles`` is the number of particles, ``nd`` the number of
-        data.
+        ``(n_particles, ...)``, and returns a ndarray of the shape of the
+        prior data ``(n_particles, nd)``; ``n_particles`` is the number of
+        particles, ``nd`` the number of data.
     data_obs : ndarray
         Observed data of shape ``(nd)``. If n_steps > 1, can be of shape
         ``(n_steps, nd)`` to provide different observations at each step.
@@ -71,6 +82,8 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
     random : {None, int, np.random.Generator}, default: None
         Seed or random generator for reproducibility; see
         :func:`dageo.utils.rng`.
+    verbose : bool, default: True
+        Print progress messages.
 
     Returns
     -------
@@ -84,7 +97,8 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
         Models at each step.
     data_steps : ndarray, only returned if ``return_steps=True``
         Data at each step.
-    weights_steps : ndarray, only returned if ``return_steps and return_weights=True``
+    weights_steps : ndarray, only returned if ``return_steps and
+        return_weights=True``
         Weights at each step.
 
     Notes
@@ -107,15 +121,19 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
     rng = utils.rng(random)
 
     # Expand sigma if float
-    if isinstance(sigma, (int, float)) or (hasattr(sigma, 'size') and sigma.size == 1):
+    if isinstance(sigma, (int, float)) or (
+        hasattr(sigma, "size") and sigma.size == 1
+    ):
         sigma = np.zeros(nd) + sigma
 
     # Handle multiple observation sets or single one
     if data_obs.ndim == 1:
         data_obs = np.tile(data_obs[np.newaxis, :], (n_steps, 1))
     elif data_obs.ndim == 2 and n_steps > 1 and data_obs.shape[0] != n_steps:
-        raise ValueError(f"Expected {n_steps} sets of observations, but got "
-                         f"{data_obs.shape[0]}.")
+        raise ValueError(
+            f"Expected {n_steps} sets of observations, but got "
+            f"{data_obs.shape[0]}."
+        )
 
     # Copy prior as start of post (output)
     model_post = model_prior.copy()
@@ -131,18 +149,20 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
 
     # Loop over steps
     for step in range(n_steps):
-        print(f"Particle Filter step {step+1: 3d}")
+        if verbose:
+            print(f"Particle Filter step {step + 1: 3d}")
 
         # Predict: Run forward model
         data_predicted = forward(model_post)
 
         # Update: Calculate likelihood and weights
-        # Assume Gaussian likelihood: p(y|x) ∝ exp(-0.5 * (y - h(x))^2 / sigma^2)
+        # Assume Gaussian likelihood: p(y|x) ∝ exp(-0.5 * (y - h(x))^2 /
+        # sigma^2)
         log_likelihood = np.zeros(n_particles)
         for i in range(n_particles):
             # Calculate log-likelihood for each particle
             residuals = data_predicted[i] - data_obs[step]
-            log_likelihood[i] = -0.5 * np.sum((residuals / sigma)**2)
+            log_likelihood[i] = -0.5 * np.sum((residuals / sigma) ** 2)
 
         # Avoid numerical issues with very small likelihoods
         log_likelihood -= np.max(log_likelihood)
@@ -156,16 +176,19 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
         n_eff = 1.0 / np.sum(weights**2)
         n_eff_ratio = n_eff / n_particles
 
-        print(f"  Effective sample size: {n_eff:.1f}/{n_particles} = {n_eff_ratio:.3f}")
+        if verbose:
+            print(f"  Effective sample size: {n_eff:.1f}/{n_particles} = "
+                  f"{n_eff_ratio:.3f}")
 
         # Resample if effective sample size is below threshold
         if n_eff_ratio < resampling_threshold:
-            print("  Resampling...")
+            if verbose:
+                print("  Resampling...")
             indices = rng.choice(n_particles, size=n_particles, p=weights)
             model_post = model_post[indices]
             # Reset weights after resampling
             weights = np.ones(n_particles) / n_particles
-        
+
         # Apply any provided post-checks
         if callback_post:
             callback_post(model_post)
@@ -184,19 +207,19 @@ def particle_filter(model_prior, forward, data_obs, sigma, n_steps=1,
 
     # Return based on requested outputs
     result = [model_post]
-    
+
     if return_post_data or return_steps:
         result.append(data_post)
-    
+
     if return_weights:
         result.append(weights)
-    
+
     if return_steps:
         result.append(model_steps)
         result.append(data_steps)
         if return_weights:
             result.append(weights_steps)
-    
+
     if len(result) == 1:
         return result[0]
     else:

@@ -25,3 +25,7 @@ dageo.egg-info/
 
 #any folder starting with .
 .claude/
+
+# macOS
+.DS_Store
+**/.DS_Store

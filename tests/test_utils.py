@@ -1,5 +1,5 @@
-import scooby
 import numpy as np
+import scooby
 from numpy.testing import assert_allclose
 
 from dageo import utils
@@ -7,20 +7,21 @@ from dageo import utils
 
 def test_gaussian_covariance():
     # Small length, no variance => eye
-    assert_allclose(utils.gaussian_covariance(4, 4, [0.1, 0.1], 0, 0),
-                    np.eye(4*4))
+    assert_allclose(
+        utils.gaussian_covariance(4, 4, [0.1, 0.1], 0, 0), np.eye(4 * 4)
+    )
 
     # Small length, some variance => still eye
     assert_allclose(
         utils.gaussian_covariance(
             nx=4, ny=4, length=[0.1, 0.1], theta=0, variance=1
         ),
-        np.eye(4*4)
+        np.eye(4 * 4),
     )
 
     # Simply check some values with variance
     x = utils.gaussian_covariance(4, 4, [2, 1], 30, 2)
-    assert_allclose(np.diag(x), 1.)
+    assert_allclose(np.diag(x), 1.0)
     assert_allclose(np.diag(x, -1)[3::4], 0)
     for i in range(3):
         assert_allclose(np.diag(x, -1)[i::4], 0.00024027168)
@@ -30,7 +31,7 @@ def test_gaussian_covariance():
 
     # Simply check some values without variance
     x = utils.gaussian_covariance(4, 4, [1, 2], 0, 0)
-    assert_allclose(np.diag(x), 1.)
+    assert_allclose(np.diag(x), 1.0)
     assert_allclose(np.diag(x, -1)[0], 0.20833333)
     assert_allclose(np.diag(x, -3)[1], 0.13466999)
     assert_allclose(np.diag(x, -4)[0], 0.6848958)
@@ -58,9 +59,9 @@ def test_localization_matrix():
     solution = np.array([[[4]], [[5]], [[9]], [[13]]])
     outtril = utils.localization_matrix(tril, data_positions, (4, 1))
     assert_allclose(solution, outtril)
-    outtriu = utils.localization_matrix(triu, data_positions, (4, 1), 'upper')
+    outtriu = utils.localization_matrix(triu, data_positions, (4, 1), "upper")
     assert_allclose(solution, outtriu)
-    outfull = utils.localization_matrix(full, data_positions, (4, 1), 'full')
+    outfull = utils.localization_matrix(full, data_positions, (4, 1), "full")
     assert_allclose(solution, outfull)
 
 
@@ -78,8 +79,8 @@ def test_Report(capsys):
     # We just ensure the shown packages do not change (core and optional).
     out1 = utils.Report()
     out2 = scooby.Report(
-        core=['dageo', 'numpy', 'scipy'],
-        optional=['matplotlib', 'IPython'],
+        core=["dageo", "numpy", "scipy"],
+        optional=["matplotlib", "IPython"],
         ncol=3,
     )
 

@@ -1,5 +1,6 @@
 import time
 import warnings
+
 from dageo import __version__
 
 # ==== 1. Extensions  ====
@@ -36,9 +37,13 @@ todo_include_todos = True
 
 # Sphinx gallery configuration
 sphinx_gallery_conf = {
-    "examples_dirs": ["../examples", ],
-    "gallery_dirs": ["gallery", ],
-    "capture_repr": ("_repr_html_", ),
+    "examples_dirs": [
+        "../examples",
+    ],
+    "gallery_dirs": [
+        "gallery",
+    ],
+    "capture_repr": ("_repr_html_",),
     # Patter to search for example files
     "filename_pattern": r"\.py",
     # Sort gallery example by file name instead of number of lines (default)
@@ -53,9 +58,12 @@ sphinx_gallery_conf = {
 
 # https://github.com/sphinx-gallery/sphinx-gallery/pull/521/files
 # Remove matplotlib agg warnings from generated doc when using plt.show
-warnings.filterwarnings("ignore", category=UserWarning,
-                        message="Matplotlib is currently using agg, which is a"
-                                " non-GUI backend, so cannot show the figure.")
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message="Matplotlib is currently using agg, which is a"
+    " non-GUI backend, so cannot show the figure.",
+)
 
 # Intersphinx configuration
 intersphinx_mapping = {
@@ -118,6 +126,6 @@ html_file_suffix = ".html"
 htmlhelp_basename = "dageo"
 html_css_files = [
     "style.css",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/" +
-    "css/font-awesome.min.css"
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/"
+    + "css/font-awesome.min.css",
 ]

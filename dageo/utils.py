@@ -23,17 +23,17 @@ from scooby import Report as ScoobyReport
 try:
     from dageo.version import version as __version__
 except ImportError:
-    __version__ = 'unknown-'+datetime.today().strftime('%Y%m%d')
+    __version__ = "unknown-" + datetime.today().strftime("%Y%m%d")
 
 
-__all__ = ['gaussian_covariance', 'localization_matrix', 'Report', 'rng']
+__all__ = ["gaussian_covariance", "localization_matrix", "Report", "rng"]
 
 
 def __dir__():
     return __all__
 
 
-def gaussian_covariance(nx, ny, length, theta, variance, dtype='float32'):
+def gaussian_covariance(nx, ny, length, theta, variance, dtype="float32"):
     """Return covariance matrix with Gaussian properties
 
     Generate covariance matrix based on grid size, anisotropy, and statistical
@@ -68,28 +68,40 @@ def gaussian_covariance(nx, ny, length, theta, variance, dtype='float32'):
     tmp1 = np.zeros([nx, nc], dtype=dtype)
     for i in range(nx):
         tmp1[i, 0] = 1.0  # Set diagonal
-        for j in range(i+1, nc):
+        for j in range(i + 1, nc):
             # Distance in the x and y directions
             d0 = (j % nx) - i
-            d1 = (j // nx)
+            d1 = j // nx
             # Rotate coordinates
-            rot0 = cost*d0 - sint*d1
-            rot1 = sint*d0 + cost*d1
+            rot0 = cost * d0 - sint * d1
+            rot1 = sint * d0 + cost * d1
             # Calculate the scaled distance
-            hl = np.sqrt((rot0/length[0])**2 + (rot1/length[1])**2)
+            hl = np.sqrt((rot0 / length[0]) ** 2 + (rot1 / length[1]) ** 2)
 
             # Sphere formula for covariance, modified for anisotropy
             if variance:  # Non-zero variance scale
                 if hl <= 1:
-                    tmp1[i, j-i] = variance * (1 - 1.5*hl + hl**3/2)
+                    tmp1[i, j - i] = variance * (1 - 1.5 * hl + hl**3 / 2)
 
             else:  # Gaspari-Cohn function for smoothness
                 if hl < 1:
-                    tmp1[i, j-i] = (-(hl**5)/4 + (hl**4)/2 + (hl**3)*5/8 -
-                                    (hl**2)*5/3 + 1)
+                    tmp1[i, j - i] = (
+                        -(hl**5) / 4
+                        + (hl**4) / 2
+                        + (hl**3) * 5 / 8
+                        - (hl**2) * 5 / 3
+                        + 1
+                    )
                 elif hl >= 1 and hl < 2:
-                    tmp1[i, j-i] = ((hl**5)/12 - (hl**4)/2 + (hl**3)*5/8 +
-                                    (hl**2)*5/3 - hl*5 + 4 - (1/hl)*2/3)
+                    tmp1[i, j - i] = (
+                        (hl**5) / 12
+                        - (hl**4) / 2
+                        + (hl**3) * 5 / 8
+                        + (hl**2) * 5 / 3
+                        - hl * 5
+                        + 4
+                        - (1 / hl) * 2 / 3
+                    )
 
     # 2. Get the indices of the non-zero columns
     ind = np.where(tmp1.sum(axis=0))[0]
@@ -97,15 +109,15 @@ def gaussian_covariance(nx, ny, length, theta, variance, dtype='float32'):
     # 3. Expand the non-zero colums ny-times
     tmp2 = np.zeros([nc, ind.size], dtype=dtype)
     for i, j in enumerate(ind):
-        n = j//nx
-        tmp2[:nc-n*nx, i] = np.tile(tmp1[:, j], ny-n)
+        n = j // nx
+        tmp2[: nc - n * nx, i] = np.tile(tmp1[:, j], ny - n)
 
     # 4. Construct array through sparse diagonal array
     cov = sp.sparse.dia_array((tmp2.T, -ind), shape=(nc, nc))
     return cov.toarray()
 
 
-def localization_matrix(covariance, data_positions, shape, cov_type='lower'):
+def localization_matrix(covariance, data_positions, shape, cov_type="lower"):
     """Return a localization matrix
 
     Build a localization matrix from a full covariance matrix based on specific
@@ -137,13 +149,13 @@ def localization_matrix(covariance, data_positions, shape, cov_type='lower'):
 
     # Extract the corresponding columns from the covariance matrix
     loc_mat = covariance[:, indices]
-    if cov_type == 'lower':
+    if cov_type == "lower":
         loc_mat += np.tril(covariance, -1).T[:, indices]
-    elif cov_type == 'upper':
+    elif cov_type == "upper":
         loc_mat += np.triu(covariance, 1).T[:, indices]
 
     # Reshape and return
-    return loc_mat.reshape((*shape, -1), order='F')
+    return loc_mat.reshape((*shape, -1), order="F")
 
 
 def rng(random=None):
@@ -175,7 +187,7 @@ def rng(random=None):
     elif isinstance(random, np.random.Generator):
         return random
     else:
-        if not hasattr(rng, '_rng'):
+        if not hasattr(rng, "_rng"):
             rng._rng = np.random.default_rng()
         return rng._rng
 
@@ -188,7 +200,7 @@ class Report(ScoobyReport):
 
     def __init__(self, **kwargs):
         """Initiate a scooby.Report instance."""
-        kwargs = {'ncol': 3, **kwargs}
-        kwargs['core'] = ['dageo', 'numpy', 'scipy']
-        kwargs['optional'] = ['matplotlib', 'IPython']
+        kwargs = {"ncol": 3, **kwargs}
+        kwargs["core"] = ["dageo", "numpy", "scipy"]
+        kwargs["optional"] = ["matplotlib", "IPython"]
         super().__init__(**kwargs)
