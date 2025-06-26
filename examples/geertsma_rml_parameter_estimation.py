@@ -1,11 +1,3 @@
-# %%
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-
-from dageo.geertsma import TorchGeertsma, TorchGeertsmaFullGrid
-from dageo.rml import rml
-
 """
 Geertsma Parameter Estimation using RML with TorchGeertsma and
 TorchGeertsmaFullGrid
@@ -32,6 +24,13 @@ Model parameters to be estimated:
 
 A vector prior_std is provided to properly scale the prior regularization term.
 """
+# %%
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
+from dageo.geertsma import TorchGeertsma, TorchGeertsmaFullGrid
+from dageo.rml import rml
 
 # --------------------------
 # Single-Point Inversion using TorchGeertsma

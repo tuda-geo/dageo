@@ -106,7 +106,7 @@ def plot_result(mpost, dpost, dobs, title, method_name, ax1, ax2):
 xlocation = -1.0
 
 # Ensemble size
-ne = int(1e4)  
+ne = int(1e4)
 
 # Data standard deviation
 obs_std = 1.0

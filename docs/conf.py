@@ -30,7 +30,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
-    # "sphinx_gallery.gen_gallery",  # Disabled to speed up build
+    "sphinx_gallery.gen_gallery",
     "sphinx_automodapi.automodapi",
     "matplotlib.sphinxext.plot_directive",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -71,6 +71,8 @@ sphinx_gallery_conf = {
     "first_notebook_cell": "%matplotlib widget",
     # Don't execute notebooks to speed up build
     "run_stale_examples": False,
+    # Use existing images instead of re-generating
+    "plot_gallery": False,
 }
 
 # https://github.com/sphinx-gallery/sphinx-gallery/pull/521/files
