@@ -10,6 +10,7 @@ future.
 - **Documentation:** https://tuda-geo.github.io/dageo
 - **Source Code:** https://github.com/tuda-geo/dageo
 - **Bug reports:** https://github.com/tuda-geo/dageo/issues
+- **Zenodo:** https://doi.org/10.5281/zenodo.14264408
 
 
 Available through pip and conda:
