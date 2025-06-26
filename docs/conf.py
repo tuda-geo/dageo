@@ -2,13 +2,12 @@ import time
 import warnings
 import sys
 import os
+from unittest.mock import MagicMock
 
 # Add the parent directory to the path so we can import dageo
 sys.path.insert(0, os.path.abspath('..'))
 
 # Mock torch import for documentation building
-from unittest.mock import MagicMock
-
 sys.modules['torch'] = MagicMock()
 sys.modules['torch.nn'] = MagicMock()
 sys.modules['torch.nn.functional'] = MagicMock()

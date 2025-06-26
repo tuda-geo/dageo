@@ -14,9 +14,18 @@ dageo Documentation
    :hidden:
 
    manual/index
-   gallery/index
    api/index
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Gallery
+
+   gallery/basicESMDA
+   gallery/basicESMDA_subspace_comparison
+   gallery/basicreservoir
+   gallery/esmda_methods_comparison
+   gallery/esmda_simple_comparison
+   gallery/fluvialreservoir
 
 .. grid:: 1 1 3 3
     :gutter: 2
@@ -53,12 +62,7 @@ dageo Documentation
 
         +++
 
-        .. button-ref:: dageo_gallery
-            :expand:
-            :color: info
-            :click-parent:
-
-            To the gallery
+        `To the gallery <gallery/basicESMDA.html>`_
 
     .. grid-item-card::
 

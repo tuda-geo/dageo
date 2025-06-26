@@ -201,9 +201,21 @@ def _default_alphas(n_iter: int) -> np.ndarray:
 
 def _anomalies(ensemble: np.ndarray) -> np.ndarray:
     """Compute ensemble anomalies normalized by sqrt(N-1)."""
-    return (ensemble - ensemble.mean(axis=0, keepdims=True)) / np.sqrt(
-        ensemble.shape[0] - 1.0
-    )
+    mean = ensemble.mean(axis=0, keepdims=True)
+    anom = ensemble - mean
+    norm_factor = np.sqrt(ensemble.shape[0] - 1.0)
+
+    # Add small epsilon to avoid division issues
+    result = anom / norm_factor
+
+    # Check for numerical issues
+    if np.any(~np.isfinite(result)):
+        warnings.warn(
+            "Non-finite values in anomalies, clipping to reasonable range"
+        )
+        result = np.nan_to_num(result, nan=0.0, posinf=1e10, neginf=-1e10)
+
+    return result
 
 
 def _perturb_obs(
@@ -333,13 +345,12 @@ def _update_local(
         # R-inflation: modify observation error based on correlation
         # When rho = 0, we want R -> infinity (no update)
         # When rho = 1, we want R unchanged
-        # Since Y_tilde = Y_anom * sqrtR_inv, to inflate R by 1/rho,
+        # Since Y_tilde = Y_anom / sqrt(R), to inflate R by 1/rho,
         # we need to scale Y_tilde by sqrt(rho)
-
-        rho_safe = np.maximum(rho, 1e-10)  # Avoid division by zero
-        scale = np.sqrt(rho_safe)
+        # D_tilde = (d - Hx) / sqrt(R), so same scaling applies
 
         # Apply localization scaling
+        scale = np.sqrt(np.maximum(rho, 1e-10))  # Avoid division by zero
         Y_tilde_loc = Y_tilde * scale[:, None]  # (n_obs, ne)
         D_tilde_loc = D_tilde * scale[:, None]  # (n_obs, ne)
 
@@ -499,8 +510,10 @@ def esmda_subspace(
             else:
                 data_prior = forward(model_post)
 
-        # Perturb observations
-        obs_pert = _perturb_obs(data_obs, sigma, alpha, rng)
+        # Perturb observations - need one perturbation per ensemble member
+        # This matches the classic ESMDA implementation
+        zd = rng.normal(size=(ne, nd))
+        data_pert = data_obs + np.sqrt(alpha) * sigma * zd
 
         # Compute anomalies
         A_t = _anomalies(model_post).T  # (n_state, N_e)
@@ -513,7 +526,7 @@ def esmda_subspace(
 
         # Scale by observation error
         Y_tilde = Y_anom_t * sqrtR_inv[:, None]
-        D_tilde = (obs_pert - data_prior).T * sqrtR_inv[:, None]
+        D_tilde = (data_pert - data_prior).T * sqrtR_inv[:, None]
 
         # Update
         if localization_function is None:

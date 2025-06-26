@@ -21,8 +21,9 @@ import numpy as np
 
 import dageo
 
-# For reproducibility
-rng = np.random.default_rng(2024)
+# For reproducibility - we'll create separate RNG instances for each method
+# to ensure they get the same random numbers
+seed = 2024
 
 # sphinx_gallery_thumbnail_number = 3
 
@@ -61,96 +62,38 @@ def pseudopdf(data, bins=200, density=True, **kwargs):
     return (y[:-1] + y[1:]) / 2, x
 
 
-def plot_comparison(
-    mpost_classic,
-    dpost_classic,
-    mpost_subspace,
-    dpost_subspace,
-    dobs,
-    title,
-    ylim,
-):
-    """Plot comparison between classic and subspace ESMDA results."""
+def plot_result(mpost, dpost, dobs, title, method_name, ax1, ax2):
+    """Plot results in the style of the original basicESMDA example."""
+    # Plot Likelihood
+    rng_plot = np.random.default_rng(42)
+    ax2.plot(
+        *pseudopdf(rng_plot.normal(dobs, size=(10000,))),
+        "C2",
+        lw=2,
+        label="Datum",
+    )
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
-    fig.suptitle(title, fontsize=16)
-
-    # Plot model parameter domain - Classic
-    ax = axes[0, 0]
-    ax.set_title("Classic ESMDA - Model Parameter Domain")
-    na = mpost_classic.shape[0] - 1
+    # Plot steps
+    na = mpost.shape[0] - 1
     for i in range(na + 1):
         params = {
             "color": "C0" if i == na else "C3",  # Last blue, rest red
             "lw": 2 if i in [0, na] else 1,  # First/last thick
             "alpha": 1 if i in [0, na] else i / na,  # start faint
-            "label": ["Initial", *((na - 2) * ("",)), "Steps", "Final"][i],
+            "label": ["Initial", *((na - 2) * ("",)), "MDA steps", "MDA"][i],
         }
-        ax.plot(*pseudopdf(mpost_classic[i, :, 0], range=(-3, 5)), **params)
-    ax.set_xlabel("x")
-    ax.set_ylabel("PDF")
-    ax.set_ylim(ylim)
-    ax.set_xlim([-3, 5])
-    ax.legend()
-    ax.grid(True, alpha=0.3)
+        ax1.plot(*pseudopdf(mpost[i, :, 0], range=(-3, 5)), **params)
+        ax2.plot(*pseudopdf(dpost[i, :, 0], range=(-5, 8)), **params)
 
-    # Plot data domain - Classic
-    ax = axes[0, 1]
-    ax.set_title("Classic ESMDA - Data Domain")
-    ax.plot(
-        *pseudopdf(rng.normal(dobs, size=(10000,))), "C2", lw=2, label="Datum"
-    )
-    for i in range(na + 1):
-        params = {
-            "color": "C0" if i == na else "C3",
-            "lw": 2 if i in [0, na] else 1,
-            "alpha": 1 if i in [0, na] else i / na,
-            "label": ["Initial", *((na - 2) * ("",)), "Steps", "Final"][i],
-        }
-        ax.plot(*pseudopdf(dpost_classic[i, :, 0], range=(-5, 8)), **params)
-    ax.set_xlabel("y")
-    ax.set_xlim([-5, 8])
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    # Plot model parameter domain - Subspace
-    ax = axes[1, 0]
-    ax.set_title("Subspace ESMDA - Model Parameter Domain")
-    for i in range(na + 1):
-        params = {
-            "color": "C0" if i == na else "C3",
-            "lw": 2 if i in [0, na] else 1,
-            "alpha": 1 if i in [0, na] else i / na,
-            "label": ["Initial", *((na - 2) * ("",)), "Steps", "Final"][i],
-        }
-        ax.plot(*pseudopdf(mpost_subspace[i, :, 0], range=(-3, 5)), **params)
-    ax.set_xlabel("x")
-    ax.set_ylabel("PDF")
-    ax.set_ylim(ylim)
-    ax.set_xlim([-3, 5])
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    # Plot data domain - Subspace
-    ax = axes[1, 1]
-    ax.set_title("Subspace ESMDA - Data Domain")
-    ax.plot(
-        *pseudopdf(rng.normal(dobs, size=(10000,))), "C2", lw=2, label="Datum"
-    )
-    for i in range(na + 1):
-        params = {
-            "color": "C0" if i == na else "C3",
-            "lw": 2 if i in [0, na] else 1,
-            "alpha": 1 if i in [0, na] else i / na,
-            "label": ["Initial", *((na - 2) * ("",)), "Steps", "Final"][i],
-        }
-        ax.plot(*pseudopdf(dpost_subspace[i, :, 0], range=(-5, 8)), **params)
-    ax.set_xlabel("y")
-    ax.set_xlim([-5, 8])
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-
-    return fig
+    # Axis and labels
+    ax1.set_title(f"{method_name} - Model Parameter Domain")
+    ax1.set_xlabel("x")
+    ax1.set_xlim([-3, 5])
+    ax1.legend()
+    ax2.set_title(f"{method_name} - Data Domain")
+    ax2.set_xlabel("y")
+    ax2.set_xlim([-5, 8])
+    ax2.legend()
 
 
 ###############################################################################
@@ -163,13 +106,15 @@ def plot_comparison(
 xlocation = -1.0
 
 # Ensemble size
-ne = int(1e2)  # Reduced from 1e7 for computational feasibility
+ne = int(1e4)  
 
 # Data standard deviation
 obs_std = 1.0
 
 # Prior: Let's start with ones as our prior guess
-mprior = rng.normal(loc=1.0, scale=obs_std, size=(ne, 1))
+# Create prior using a fixed seed
+rng_prior = np.random.default_rng(seed)
+mprior = rng_prior.normal(loc=1.0, scale=obs_std, size=(ne, 1))
 
 ###############################################################################
 # Run ESMDA and plot
@@ -183,39 +128,63 @@ def lin_fwd(x):
 # Sample an "observation"
 l_dobs = lin_fwd(xlocation)
 
-# Run classic ESMDA
+# Run classic ESMDA with its own RNG
 print("Running classic ESMDA for linear case...")
+rng_classic = np.random.default_rng(seed + 1)
 lm_post_classic, ld_post_classic = dageo.esmda(
-    model_prior=mprior,
+    model_prior=mprior.copy(),
     forward=lin_fwd,
     data_obs=l_dobs,
     sigma=obs_std,
     alphas=10,
     return_steps=True,
+    random=rng_classic,
 )
 
-# Run subspace ESMDA
+# Run subspace ESMDA with its own RNG
 print("Running subspace ESMDA for linear case...")
+rng_subspace = np.random.default_rng(seed + 1)
 lm_post_subspace, ld_post_subspace = dageo.esmda_subspace(
-    model_prior=mprior,
+    model_prior=mprior.copy(),
     forward=lin_fwd,
     data_obs=l_dobs,
     sigma=obs_std,
     alphas=10,
     return_steps=True,
+    random=rng_subspace,
 )
 
 ###############################################################################
+# Plot linear case results
 
-plot_comparison(
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(
+    2, 2, figsize=(12, 8), constrained_layout=True
+)
+fig.suptitle("Linear Case Comparison", fontsize=16)
+
+# Plot Classic ESMDA
+plot_result(
     lm_post_classic,
     ld_post_classic,
+    l_dobs,
+    "Linear Case",
+    "Classic ESMDA",
+    ax1,
+    ax2,
+)
+ax1.set_ylim([0, 0.6])
+
+# Plot Subspace ESMDA
+plot_result(
     lm_post_subspace,
     ld_post_subspace,
     l_dobs,
-    "Linear Case Comparison",
-    ylim=[0, 0.6],
+    "Linear Case",
+    "Subspace ESMDA",
+    ax3,
+    ax4,
 )
+ax3.set_ylim([0, 0.6])
 
 ###############################################################################
 # Nonlinear case
@@ -230,39 +199,63 @@ def nonlin_fwd(x):
 # Sample a nonlinear observation
 n_dobs = nonlin_fwd(xlocation)
 
-# Run classic ESMDA
+# Run classic ESMDA with its own RNG
 print("\nRunning classic ESMDA for nonlinear case...")
+rng_classic_nl = np.random.default_rng(seed + 2)
 nm_post_classic, nd_post_classic = dageo.esmda(
-    model_prior=mprior,
+    model_prior=mprior.copy(),
     forward=nonlin_fwd,
     data_obs=n_dobs,
     sigma=obs_std,
     alphas=10,
     return_steps=True,
+    random=rng_classic_nl,
 )
 
-# Run subspace ESMDA
+# Run subspace ESMDA with its own RNG
 print("Running subspace ESMDA for nonlinear case...")
+rng_subspace_nl = np.random.default_rng(seed + 2)
 nm_post_subspace, nd_post_subspace = dageo.esmda_subspace(
-    model_prior=mprior,
+    model_prior=mprior.copy(),
     forward=nonlin_fwd,
     data_obs=n_dobs,
     sigma=obs_std,
     alphas=10,
     return_steps=True,
+    random=rng_subspace_nl,
 )
 
 ###############################################################################
+# Plot nonlinear case results
 
-plot_comparison(
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(
+    2, 2, figsize=(12, 8), constrained_layout=True
+)
+fig.suptitle("Nonlinear Case Comparison", fontsize=16)
+
+# Plot Classic ESMDA
+plot_result(
     nm_post_classic,
     nd_post_classic,
+    n_dobs,
+    "Nonlinear Case",
+    "Classic ESMDA",
+    ax1,
+    ax2,
+)
+ax1.set_ylim([0, 0.7])
+
+# Plot Subspace ESMDA
+plot_result(
     nm_post_subspace,
     nd_post_subspace,
     n_dobs,
-    "Nonlinear Case Comparison",
-    ylim=[0, 0.7],
+    "Nonlinear Case",
+    "Subspace ESMDA",
+    ax3,
+    ax4,
 )
+ax3.set_ylim([0, 0.7])
 
 ###############################################################################
 # Direct comparison plots
@@ -297,6 +290,7 @@ ax.grid(True, alpha=0.3)
 # Linear case - Scatter plot
 ax = axes[0, 1]
 # Sample for plotting (too many points otherwise)
+rng = np.random.default_rng(seed)
 idx = rng.choice(ne, size=min(1000, ne), replace=False)
 ax.scatter(
     lm_post_classic[-1, idx, 0], lm_post_subspace[-1, idx, 0], alpha=0.5, s=1

@@ -203,10 +203,40 @@ nl_perm_post, nl_data_post = dageo.esmda(**inp)
 
 
 ###############################################################################
-# With localization
-# '''''''''''''''''
+# With localization (matrix-based)
+# ''''''''''''''''''''''''''''''''
 
 wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
+
+
+###############################################################################
+# With localization (R-inflation, subspace method)
+# ''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+def localization_function(state_idx):
+    """R-inflation localization using Gaspari-Cohn correlation."""
+    from dageo.data_assimilation import gaspari_cohn
+
+    # Convert state index to 2D coordinates
+    y, x = divmod(state_idx, nx)
+
+    # Compute distances to all observation points
+    distances = []
+    for obs_x, obs_y in zip(ox, oy):
+        # Repeat distance for each time point
+        for _ in range(nt):
+            dist = np.sqrt((x - obs_x)**2 + (y - obs_y)**2)
+            distances.append(dist)
+
+    # Apply Gaspari-Cohn correlation with radius of 12 cells
+    return gaspari_cohn(np.array(distances), radius=12.0)
+
+
+# Run subspace ESMDA with R-inflation localization
+sl_perm_post, sl_data_post = dageo.esmda_subspace(
+    **inp, localization_function=localization_function
+)
 
 
 ###############################################################################
@@ -215,38 +245,42 @@ wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
 
 # Plot posterior
 fig, axs = plt.subplots(
-    1, 3, figsize=(8, 4), sharex=True, sharey=True, constrained_layout=True
+    2, 2, figsize=(10, 8), sharex=True, sharey=True, constrained_layout=True
 )
 
 par = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
 
-axs[0].set_title("Prior Mean")
-im = axs[0].imshow(perm_prior.mean(axis=0).T, **par)
+axs[0, 0].set_title("Prior Mean")
+im = axs[0, 0].imshow(perm_prior.mean(axis=0).T, **par)
 
+axs[0, 1].set_title("Post Mean; No localization")
+axs[0, 1].imshow(nl_perm_post.mean(axis=0).T, **par)
 
-axs[1].set_title("Post Mean; No localization")
-axs[1].imshow(nl_perm_post.mean(axis=0).T, **par)
+axs[1, 0].set_title("Post Mean: Matrix Localization")
+axs[1, 0].imshow(wl_perm_post.mean(axis=0).T, **par)
 
-axs[2].set_title("Post Mean: Localization")
-axs[2].imshow(wl_perm_post.mean(axis=0).T, **par)
-axs[2].contour(
-    loc_mat.sum(axis=2).T,
-    levels=[
-        2.0,
-    ],
-    colors="w",
-)
+axs[1, 1].set_title("Post Mean: R-inflation (Subspace)")
+axs[1, 1].imshow(sl_perm_post.mean(axis=0).T, **par)
+
+# Show wells on all plots
+for ax in axs.flat:
+    ax.contour(
+        loc_mat.sum(axis=2).T,
+        levels=[2.0],
+        colors="w",
+    )
 
 fig.colorbar(
     im, ax=axs, label="Log Permeabilities (mD)", orientation="horizontal"
 )
 
-for ax in axs:
+for ax in axs.flat:
     for well in wells:
         ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
-for ax in axs:
+for ax in axs.flat:
     ax.set_xlabel("x-direction")
-axs[0].set_ylabel("y-direction")
+for ax in axs[:, 0]:
+    ax.set_ylabel("y-direction")
 
 
 ###############################################################################
