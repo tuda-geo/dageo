@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 import dageo
@@ -14,7 +14,7 @@ def pseudopdf(data, bins=200, density=True, **kwargs):
     `scipy.stats.gaussian_kde`.
     """
     x, y = np.histogram(data, bins=bins, density=density, **kwargs)
-    return (y[:-1]+y[1:])/2, x
+    return (y[:-1] + y[1:]) / 2, x
 
 
 def forward(x, beta):
@@ -91,7 +91,7 @@ def test_esmda_linear():
     assert_allclose(0.0, x[np.argmax(p)], atol=1e-8)
 
     # Warning
-    with pytest.warns(UserWarning, match='provided: 1.25'):
+    with pytest.warns(UserWarning, match="provided: 1.25"):
         lm_post3 = dageo.esmda(
             model_prior=mprior,
             forward=lin_fwd,

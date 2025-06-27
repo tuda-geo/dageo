@@ -19,7 +19,7 @@ import scipy as sp
 
 from dageo import utils
 
-__all__ = ['Simulator', 'RandomPermeability']
+__all__ = ["Simulator", "RandomPermeability"]
 
 
 def __dir__():
@@ -82,11 +82,24 @@ class Simulator:
 
     """
 
-    def __init__(self, nx, ny, phi=0.2, c_f=1e-5, p0=1.0, rho0=1.0, mu_w=1.0,
-                 rw=0.15, pres_ini=150.0, wells=None, dx=50.0, dz=10.0):
+    def __init__(
+        self,
+        nx,
+        ny,
+        phi=0.2,
+        c_f=1e-5,
+        p0=1.0,
+        rho0=1.0,
+        mu_w=1.0,
+        rw=0.15,
+        pres_ini=150.0,
+        wells=None,
+        dx=50.0,
+        dz=10.0,
+    ):
         """Initialize a Simulation instance."""
 
-        self.size = nx*ny
+        self.size = nx * ny
         self.shape = (nx, ny)
         self.nx = nx
         self.ny = ny
@@ -113,12 +126,14 @@ class Simulator:
             # ([self.nx-1, self.ny-1, 120]), is located at the top-right
             # corner, and has a pressure of 120 units, possibly a lower
             # pressure or production scenario.
-            self.wells = np.array([[0, 0, 180], [self.nx-1, self.ny-1, 120]])
+            self.wells = np.array(
+                [[0, 0, 180], [self.nx - 1, self.ny - 1, 120]]
+            )
         else:
             self.wells = np.array(wells)
 
         # Get well locations and set terms
-        self.locs = self.wells[:, 1]*self.nx + self.wells[:, 0]
+        self.locs = self.wells[:, 1] * self.nx + self.wells[:, 0]
 
     @property
     def _set_well_terms(self):
@@ -169,18 +184,18 @@ class Simulator:
         t1 = self.dx * self.perm_field[:-1] * self.perm_field[1:]
         t1 /= self.perm_field[:-1] + self.perm_field[1:]
         t1 *= (phi[:-1] + phi[1:]) / 2
-        t1[self.nx-1::self.nx] = 0.0
+        t1[self.nx - 1:: self.nx] = 0.0
         d[:-1] += t1
         d[1:] += t1
         m1[:-1] -= t1
         p1[1:] -= t1
 
-        t2 = self.dx * self.perm_field[:-self.nx] * self.perm_field[self.nx:]
-        t2 /= self.perm_field[:-self.nx] + self.perm_field[self.nx:]
-        t2 *= (phi[:-self.nx] + phi[self.nx:]) / 2
-        d[:-self.nx] += t2
+        t2 = self.dx * self.perm_field[: -self.nx] * self.perm_field[self.nx:]
+        t2 /= self.perm_field[: -self.nx] + self.perm_field[self.nx:]
+        t2 *= (phi[: -self.nx] + phi[self.nx:]) / 2
+        d[: -self.nx] += t2
         d[self.nx:] += t2
-        mn[:-self.nx] -= t2
+        mn[: -self.nx] -= t2
         pn[self.nx:] -= t2
 
         # Add wells.
@@ -193,13 +208,13 @@ class Simulator:
             data = np.array([mn, m1, d, p1, pn])
         else:
             offsets = np.array([-1, 0, 1])
-            data = np.array([mn+m1, d, p1+pn])
+            data = np.array([mn + m1, d, p1 + pn])
         K = sp.sparse.dia_array((data, offsets), shape=(self.size, self.size))
 
         # Solve the system
         return sp.sparse.linalg.spsolve(K.tocsc(), f, use_umfpack=False)
 
-    def __call__(self, perm_fields, dt=np.ones(10)*0.0001, data=False):
+    def __call__(self, perm_fields, dt=np.ones(10) * 0.0001, data=False):
         """Run simulator.
 
         Run the simulation across multiple time steps and possibly multiple
@@ -226,21 +241,25 @@ class Simulator:
         """
         if perm_fields.ndim == 2:
             ne = 1
-            perm_fields = [perm_fields, ]
+            perm_fields = [
+                perm_fields,
+            ]
         else:
             ne = perm_fields.shape[0]
-        nt = dt.size+1
+        nt = dt.size + 1
 
         out = np.zeros((ne, nt, self.nx, self.ny))
         for n, perm_field in enumerate(perm_fields):
 
-            self.perm_field = perm_field.ravel('F')
+            self.perm_field = perm_field.ravel("F")
             self._set_well_terms
 
-            pressure = np.ones((dt.size+1, self.size)) * self.pres_ini
+            pressure = np.ones((dt.size + 1, self.size)) * self.pres_ini
             for i, d in enumerate(dt):
-                pressure[i+1, :] = self.solve(pressure[i, :], d)
-            out[n, ...] = pressure.reshape((dt.size+1, *self.shape), order='F')
+                pressure[i + 1, :] = self.solve(pressure[i, :], d)
+            out[n, ...] = pressure.reshape(
+                (dt.size + 1, *self.shape), order="F"
+            )
 
         if ne == 1:
             out = out[0, ...]
@@ -274,17 +293,26 @@ class RandomPermeability:
 
     """
 
-    def __init__(self, nx, ny, perm_mean, perm_min, perm_max,
-                 length=(10.0, 10.0), theta=45.0, variance=1.0,
-                 dtype='float32'):
+    def __init__(
+        self,
+        nx,
+        ny,
+        perm_mean,
+        perm_min,
+        perm_max,
+        length=(10.0, 10.0),
+        theta=45.0,
+        variance=1.0,
+        dtype="float32",
+    ):
         """Initialize parameters for generating random permeability fields."""
-        self.nx, self.ny = nx, ny                # Grid dimensions
-        self.nc = nx * ny                        # Total number of cells
-        self.perm_mean = perm_mean               # Permeability statistics
+        self.nx, self.ny = nx, ny  # Grid dimensions
+        self.nc = nx * ny  # Total number of cells
+        self.perm_mean = perm_mean  # Permeability statistics
         self.perm_min, self.perm_max = perm_min, perm_max
         self.length, self.theta = length, theta  # Anisotropy parameters
-        self.variance = variance                 # Variance
-        self.dtype = dtype                       # Data type
+        self.variance = variance  # Variance
+        self.dtype = dtype  # Data type
 
     @property
     def cov(self):
@@ -293,10 +321,14 @@ class RandomPermeability:
         Lazy-loaded covariance matrix, calculated based on anisotropy and
         statistical parameters.
         """
-        if not hasattr(self, '_cov'):
+        if not hasattr(self, "_cov"):
             self._cov = utils.gaussian_covariance(
-                nx=self.nx, ny=self.ny, length=self.length,
-                theta=self.theta, variance=self.variance, dtype=self.dtype
+                nx=self.nx,
+                ny=self.ny,
+                length=self.length,
+                theta=self.theta,
+                variance=self.variance,
+                dtype=self.dtype,
             )
         return self._cov
 
@@ -307,12 +339,13 @@ class RandomPermeability:
         Lower Cholesky decomposition of the covariance matrix, used for
         generating random fields.
         """
-        if not hasattr(self, '_lcho'):
+        if not hasattr(self, "_lcho"):
             self._lcho = sp.linalg.cholesky(self.cov, lower=True)
         return self._lcho
 
-    def __call__(self, n, perm_mean=None, perm_min=None, perm_max=None,
-                 random=None):
+    def __call__(
+        self, n, perm_mean=None, perm_min=None, perm_max=None, random=None
+    ):
         """Generate n random permeability fields
 
         Generate n random permeability fields using the specified statistical
@@ -344,12 +377,13 @@ class RandomPermeability:
             perm_max = self.perm_max
 
         # Initialize fields with mean permeability
-        out = np.full((n, self.nx, self.ny), perm_mean, order='F')
+        out = np.full((n, self.nx, self.ny), perm_mean, order="F")
         for i in range(n):
             z = utils.rng(random).normal(size=self.nc)  # Random numbers
             # Apply the Cholesky transform
             out[i, ...] += (self.lcho @ z).reshape(
-                    (self.nx, self.ny), order='F')
+                (self.nx, self.ny), order="F"
+            )
 
         # Clip the results to stay within specified bounds
         return out.clip(perm_min, perm_max)

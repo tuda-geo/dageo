@@ -28,11 +28,12 @@ reproduce the facies.
         conda install -c conda-forge pooch
 
 """
+
 import json
 
-import pooch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pooch
 
 import dageo
 
@@ -50,7 +51,7 @@ folder = "data"
 ffacies = "facies.npy"
 finput = "facies.json"
 fpfacies = pooch.retrieve(
-    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+ffacies,
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/" + ffacies,
     "4bfe56c836bf17ca63453c37e5da91cb97bbef8cc6c08d605f70bd64fe7488b2",
     fname=ffacies,
     path=folder,
@@ -63,13 +64,16 @@ perm_means = [0.1, 5.0, 3.0]
 
 # Plot the facies
 fig, axs = plt.subplots(
-    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True
+)
 axs = axs.ravel()
 fig.suptitle(f"Facies {[f'{i} = {p}' for i, p in enumerate(perm_means)]}")
 for i in range(ne):
     im = axs[i].imshow(
-        facies[i, ...], cmap=plt.get_cmap("Accent", 3),
-        clim=[-0.5, 2.5], origin="lower"
+        facies[i, ...],
+        cmap=plt.get_cmap("Accent", 3),
+        clim=[-0.5, 2.5],
+        origin="lower",
     )
 fig.colorbar(im, ax=axs, ticks=[0, 1, 2], label="Facies code")
 
@@ -93,7 +97,8 @@ for code, mean in enumerate(perm_means):
     permeabilities[mask] = RP(ne, perm_mean=mean)[mask]
 
 fig, axs = plt.subplots(
-    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True)
+    2, 5, figsize=(8, 3), sharex=True, sharey=True, constrained_layout=True
+)
 axs = axs.ravel()
 fig.suptitle("Permeabilities")
 for i in range(ne):
@@ -110,7 +115,7 @@ perm_true = permeabilities[0, ...][None, ...]
 perm_prior = permeabilities[1:, ...]
 
 # Time steps
-dt = np.zeros(10)+0.0001
+dt = np.zeros(10) + 0.0001
 time = np.r_[0, np.cumsum(dt)]
 nt = time.size
 
@@ -125,11 +130,16 @@ oy = (5, 10, 24)
 nd = time.size * len(ox)
 
 # Wells
-wells = np.array([
-    [ox[0], oy[0], 180], [5, 12, 120],
-    [ox[1], oy[1], 180], [20, 5, 120],
-    [ox[2], oy[2], 180], [24, 17, 120]
-])
+wells = np.array(
+    [
+        [ox[0], oy[0], 180],
+        [5, 12, 120],
+        [ox[1], oy[1], 180],
+        [20, 5, 120],
+        [ox[2], oy[2], 180],
+        [24, 17, 120],
+    ]
+)
 
 
 ###############################################################################
@@ -193,10 +203,40 @@ nl_perm_post, nl_data_post = dageo.esmda(**inp)
 
 
 ###############################################################################
-# With localization
-# '''''''''''''''''
+# With localization (matrix-based)
+# ''''''''''''''''''''''''''''''''
 
 wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
+
+
+###############################################################################
+# With localization (R-inflation, subspace method)
+# ''''''''''''''''''''''''''''''''''''''''''''''''
+
+
+def localization_function(state_idx):
+    """R-inflation localization using Gaspari-Cohn correlation."""
+    from dageo.data_assimilation import gaspari_cohn
+
+    # Convert state index to 2D coordinates
+    y, x = divmod(state_idx, nx)
+
+    # Compute distances to all observation points
+    distances = []
+    for obs_x, obs_y in zip(ox, oy):
+        # Repeat distance for each time point
+        for _ in range(nt):
+            dist = np.sqrt((x - obs_x)**2 + (y - obs_y)**2)
+            distances.append(dist)
+
+    # Apply Gaspari-Cohn correlation with radius of 12 cells
+    return gaspari_cohn(np.array(distances), radius=12.0)
+
+
+# Run subspace ESMDA with R-inflation localization
+sl_perm_post, sl_data_post = dageo.esmda_subspace(
+    **inp, localization_function=localization_function
+)
 
 
 ###############################################################################
@@ -205,30 +245,42 @@ wl_perm_post, wl_data_post = dageo.esmda(**inp, localization_matrix=loc_mat)
 
 # Plot posterior
 fig, axs = plt.subplots(
-    1, 3, figsize=(8, 4), sharex=True, sharey=True, constrained_layout=True)
+    2, 2, figsize=(10, 8), sharex=True, sharey=True, constrained_layout=True
+)
 
 par = {"vmin": perm_min, "vmax": perm_max, "origin": "lower"}
 
-axs[0].set_title("Prior Mean")
-im = axs[0].imshow(perm_prior.mean(axis=0).T, **par)
+axs[0, 0].set_title("Prior Mean")
+im = axs[0, 0].imshow(perm_prior.mean(axis=0).T, **par)
 
+axs[0, 1].set_title("Post Mean; No localization")
+axs[0, 1].imshow(nl_perm_post.mean(axis=0).T, **par)
 
-axs[1].set_title("Post Mean; No localization")
-axs[1].imshow(nl_perm_post.mean(axis=0).T, **par)
+axs[1, 0].set_title("Post Mean: Matrix Localization")
+axs[1, 0].imshow(wl_perm_post.mean(axis=0).T, **par)
 
-axs[2].set_title("Post Mean: Localization")
-axs[2].imshow(wl_perm_post.mean(axis=0).T, **par)
-axs[2].contour(loc_mat.sum(axis=2).T, levels=[2.0, ], colors="w")
+axs[1, 1].set_title("Post Mean: R-inflation (Subspace)")
+axs[1, 1].imshow(sl_perm_post.mean(axis=0).T, **par)
 
-fig.colorbar(im, ax=axs, label="Log Permeabilities (mD)",
-             orientation="horizontal")
+# Show wells on all plots
+for ax in axs.flat:
+    ax.contour(
+        loc_mat.sum(axis=2).T,
+        levels=[2.0],
+        colors="w",
+    )
 
-for ax in axs:
+fig.colorbar(
+    im, ax=axs, label="Log Permeabilities (mD)", orientation="horizontal"
+)
+
+for ax in axs.flat:
     for well in wells:
         ax.plot(well[0], well[1], ["C3v", "C1^"][int(well[2] == 120)])
-for ax in axs:
-    ax.set_xlabel('x-direction')
-axs[0].set_ylabel('y-direction')
+for ax in axs.flat:
+    ax.set_xlabel("x-direction")
+for ax in axs[:, 0]:
+    ax.set_ylabel("y-direction")
 
 
 ###############################################################################
@@ -237,17 +289,26 @@ axs[0].set_ylabel('y-direction')
 
 # QC data and priors
 fig, axs = plt.subplots(
-    2, 3, figsize=(8, 5), sharex=True, sharey=True, constrained_layout=True)
+    2, 3, figsize=(8, 5), sharex=True, sharey=True, constrained_layout=True
+)
 fig.suptitle("Prior and posterior data")
 for i, ax in enumerate(axs[0, :]):
     ax.set_title(f"Well ({ox[i]}; {oy[i]})")
-    ax.plot(time*24*60*60, data_prior[..., i::3].T, color=".6", alpha=0.5)
-    ax.plot(time*24*60*60, nl_data_post[..., i::3].T, color="C0", alpha=0.5)
-    ax.plot(time*24*60*60, data_obs[0, i::3], "C3o")
+    ax.plot(
+        time * 24 * 60 * 60, data_prior[..., i::3].T, color=".6", alpha=0.5
+    )
+    ax.plot(
+        time * 24 * 60 * 60, nl_data_post[..., i::3].T, color="C0", alpha=0.5
+    )
+    ax.plot(time * 24 * 60 * 60, data_obs[0, i::3], "C3o")
 for i, ax in enumerate(axs[1, :]):
-    ax.plot(time*24*60*60, data_prior[..., i::3].T, color=".6", alpha=0.5)
-    ax.plot(time*24*60*60, wl_data_post[..., i::3].T, color="C0", alpha=0.5)
-    ax.plot(time*24*60*60, data_obs[0, i::3], "C3o")
+    ax.plot(
+        time * 24 * 60 * 60, data_prior[..., i::3].T, color=".6", alpha=0.5
+    )
+    ax.plot(
+        time * 24 * 60 * 60, wl_data_post[..., i::3].T, color="C0", alpha=0.5
+    )
+    ax.plot(time * 24 * 60 * 60, data_obs[0, i::3], "C3o")
     ax.set_xlabel("Time (s)")
 for i, ax in enumerate(axs[:, 0]):
     ax.set_ylabel("Pressure (bar)")
@@ -379,7 +440,7 @@ for i, txt in enumerate(["No l", "L"]):
 # https://github.com/tuda-geo/data/resmda.
 
 fpinput = pooch.retrieve(
-    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/"+finput,
+    "https://raw.github.com/tuda-geo/data/2024-06-18/resmda/" + finput,
     "db2cb8a620775c68374c24a4fa811f6350381c7fc98a823b9571136d307540b4",
     fname=finput,
     path=folder,

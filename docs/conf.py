@@ -1,6 +1,22 @@
 import time
 import warnings
-from dageo import __version__
+import sys
+import os
+from unittest.mock import MagicMock
+
+# Add the parent directory to the path so we can import dageo
+sys.path.insert(0, os.path.abspath('..'))
+
+# Mock torch import for documentation building
+sys.modules['torch'] = MagicMock()
+sys.modules['torch.nn'] = MagicMock()
+sys.modules['torch.nn.functional'] = MagicMock()
+
+# Try to import version, but provide a fallback
+try:
+    from dageo import __version__
+except ImportError:
+    __version__ = 'unknown'
 
 # ==== 1. Extensions  ====
 
@@ -36,9 +52,13 @@ todo_include_todos = True
 
 # Sphinx gallery configuration
 sphinx_gallery_conf = {
-    "examples_dirs": ["../examples", ],
-    "gallery_dirs": ["gallery", ],
-    "capture_repr": ("_repr_html_", ),
+    "examples_dirs": [
+        "../examples",
+    ],
+    "gallery_dirs": [
+        "gallery",
+    ],
+    "capture_repr": ("_repr_html_",),
     # Patter to search for example files
     "filename_pattern": r"\.py",
     # Sort gallery example by file name instead of number of lines (default)
@@ -49,13 +69,20 @@ sphinx_gallery_conf = {
     "show_memory": True,
     # Custom first notebook cell
     "first_notebook_cell": "%matplotlib widget",
+    # Don't execute notebooks to speed up build
+    "run_stale_examples": False,
+    # Use existing images instead of re-generating
+    "plot_gallery": False,
 }
 
 # https://github.com/sphinx-gallery/sphinx-gallery/pull/521/files
 # Remove matplotlib agg warnings from generated doc when using plt.show
-warnings.filterwarnings("ignore", category=UserWarning,
-                        message="Matplotlib is currently using agg, which is a"
-                                " non-GUI backend, so cannot show the figure.")
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message="Matplotlib is currently using agg, which is a"
+    " non-GUI backend, so cannot show the figure.",
+)
 
 # Intersphinx configuration
 intersphinx_mapping = {
@@ -118,6 +145,6 @@ html_file_suffix = ".html"
 htmlhelp_basename = "dageo"
 html_css_files = [
     "style.css",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/" +
-    "css/font-awesome.min.css"
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/"
+    + "css/font-awesome.min.css",
 ]

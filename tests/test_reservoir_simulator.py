@@ -31,8 +31,18 @@ class TestSimulator:
 
         wells = np.array([[1, 1, 130], [0, 3, 200]])
         RS = reservoir_simulator.Simulator(
-                nx=2, ny=4, phi=0.3, c_f=1e-4, p0=0.8, rho0=0.9, mu_w=0.7,
-                rw=0.13, pres_ini=140.0, dx=30.0, dz=20., wells=wells,
+            nx=2,
+            ny=4,
+            phi=0.3,
+            c_f=1e-4,
+            p0=0.8,
+            rho0=0.9,
+            mu_w=0.7,
+            rw=0.13,
+            pres_ini=140.0,
+            dx=30.0,
+            dz=20.0,
+            wells=wells,
         )
         assert RS.size == 8
         assert RS.shape == (2, 4)
@@ -57,17 +67,25 @@ class TestSimulator:
         nx, ny = 3, 2
         RS = reservoir_simulator.Simulator(nx, ny)
 
-        result = np.array([[
-            [150.00000000, 150.00000000],
-            [150.00000000, 150.00000000],
-            [150.00000000, 150.00000000]], [
-            [154.18781512, 150.91103108],
-            [150.54640165, 149.45359835],
-            [149.08896892, 145.81218488]], [
-            [158.73203532, 153.71247787],
-            [151.25155563, 148.74874726],
-            [146.28778058, 141.26794637]
-        ]])
+        result = np.array(
+            [
+                [
+                    [150.00000000, 150.00000000],
+                    [150.00000000, 150.00000000],
+                    [150.00000000, 150.00000000],
+                ],
+                [
+                    [154.18781512, 150.91103108],
+                    [150.54640165, 149.45359835],
+                    [149.08896892, 145.81218488],
+                ],
+                [
+                    [158.73203532, 153.71247787],
+                    [151.25155563, 148.74874726],
+                    [146.28778058, 141.26794637],
+                ],
+            ]
+        )
 
         perm_fields = np.ones((nx, ny))
         dt = np.array([0.001, 0.1])
@@ -96,8 +114,8 @@ class TestSimulator:
         out2 = RS2(perm_fields, dt=dt)
 
         assert_allclose(
-            out1.reshape(dt.size+1, -1),
-            out2.reshape(dt.size+1, -1, order='F')
+            out1.reshape(dt.size + 1, -1),
+            out2.reshape(dt.size + 1, -1, order="F"),
         )
 
 
@@ -113,14 +131,15 @@ class TestRandomPermeability:
         assert RP.length == (10.0, 10.0)
         assert RP.theta == 45.0
         assert RP.variance == 1.0
-        assert RP.dtype == 'float32'
+        assert RP.dtype == "float32"
 
         RP = reservoir_simulator.RandomPermeability(
-                3, 2, 0.5, 0.2, 0.8, (3.0, 4.0), 0.0, 2.1, 'float64')
+            3, 2, 0.5, 0.2, 0.8, (3.0, 4.0), 0.0, 2.1, "float64"
+        )
         assert RP.length == (3.0, 4.0)
         assert RP.theta == 0.0
         assert RP.variance == 2.1
-        assert RP.dtype == 'float64'
+        assert RP.dtype == "float64"
 
     def test_cov_lcho(self):
         # cov is just a call to utils.gaussian_covariance - check.
@@ -139,11 +158,15 @@ class TestRandomPermeability:
         assert_allclose(RP(1, 0.5, 0.5, 0.5), 0.5)
 
         rng = dageo.utils.rng(4)
-        result = np.array([[
-            [0.00000000, 0.29639514],
-            [0.00000000, 0.00000000],
-            [0.83044794, 0.27682457]
-        ]])
+        result = np.array(
+            [
+                [
+                    [0.00000000, 0.29639514],
+                    [0.00000000, 0.00000000],
+                    [0.83044794, 0.27682457],
+                ]
+            ]
+        )
         assert_allclose(RP(1, random=rng), result, rtol=1e-6)
 
 
